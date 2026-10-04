@@ -101,6 +101,45 @@
     return a.map((r, i) => r[i]).sort((x, y) => x - y);
   }
 
+  // Eigenvalues of a dense symmetric matrix of any moderate size: Householder
+  // reduction to tridiagonal form, then implicit QL. O(n^3), fine for n ≲ 500.
+  function eigSymFast(A) {
+    const n = A.length;
+    const a = A.map((r) => Float64Array.from(r));
+    const v = new Float64Array(n), p = new Float64Array(n);
+    for (let k = 0; k < n - 2; k++) {
+      let norm = 0;
+      for (let i = k + 1; i < n; i++) norm += a[i][k] * a[i][k];
+      norm = Math.sqrt(norm);
+      if (norm === 0) continue;
+      const alpha = a[k + 1][k] > 0 ? -norm : norm;
+      let vv = 0;
+      for (let i = k + 1; i < n; i++) { v[i] = a[i][k]; }
+      v[k + 1] -= alpha;
+      for (let i = k + 1; i < n; i++) vv += v[i] * v[i];
+      if (vv === 0) continue;
+      // p = (2/vv) A v ;  q = p − (vᵀp / vv) v ;  A ← A − v qᵀ − q vᵀ
+      let vp = 0;
+      for (let i = k + 1; i < n; i++) {
+        let s = 0;
+        const ai = a[i];
+        for (let j = k + 1; j < n; j++) s += ai[j] * v[j];
+        p[i] = (2 * s) / vv;
+        vp += v[i] * p[i];
+      }
+      const K = vp / vv;
+      for (let i = k + 1; i < n; i++) p[i] -= K * v[i];
+      for (let i = k + 1; i < n; i++) {
+        const ai = a[i];
+        for (let j = k + 1; j < n; j++) ai[j] -= v[i] * p[j] + p[i] * v[j];
+      }
+      a[k + 1][k] = alpha;
+    }
+    const d = Array.from({ length: n }, (_, i) => a[i][i]);
+    const e = Array.from({ length: n - 1 }, (_, i) => a[i + 1][i]);
+    return eigTridiag(d, e);
+  }
+
   // Solve A x = b (A square, rows) by Gaussian elimination with partial pivoting.
   function solve(A, b) {
     const n = A.length;
@@ -275,5 +314,5 @@
     return vals;
   }
 
-  window.DC = { randn, gamma, chi, eigTridiag, eigSym, solve, histogram, Plot, PALETTE, legend, controls, widgets: {} };
+  window.DC = { randn, gamma, chi, eigTridiag, eigSym, eigSymFast, solve, histogram, Plot, PALETTE, legend, controls, widgets: {} };
 })();

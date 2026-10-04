@@ -243,6 +243,51 @@
   };
 
   // ---------------------------------------------------------------------------
+  // Ridge: fit a noisy curve with 20 Gaussian bumps; slide lambda.
+  W.ridge = (root) => {
+    const n = 25, K = 20, width = 0.06, sigma = 0.3;
+    const f = (x) => Math.sin(2 * Math.PI * x) + 0.5 * Math.cos(5 * x);
+    const centers = Array.from({ length: K }, (_, k) => k / (K - 1));
+    const feats = (x) => centers.map((c) => Math.exp(-((x - c) ** 2) / (2 * width * width)));
+    let xs, ys;
+    const vals = DC.controls(root, [
+      { type: "range", id: "loglam", label: "log₁₀ λ", min: -6, max: 2, step: 0.1, value: -2, fmt: (v) => v.toFixed(1) },
+      { type: "button", id: "re", label: "New data" },
+    ], (id) => { if (id === "re") sample(); render(); });
+    const plot = new DC.Plot(root, { height: 260, xlabel: "x" });
+    const caption = document.createElement("div");
+    caption.className = "caption";
+    root.appendChild(caption);
+
+    function sample() {
+      xs = Array.from({ length: n }, () => Math.random());
+      ys = xs.map((x) => f(x) + sigma * DC.randn());
+    }
+    function render() {
+      const lam = 10 ** vals.loglam;
+      const Phi = xs.map(feats);
+      const G = centers.map((_, a) => centers.map((_, b) => Phi.reduce((s, r) => s + r[a] * r[b], 0) + (a === b ? lam : 0)));
+      const rhs = centers.map((_, a) => Phi.reduce((s, r, i) => s + r[a] * ys[i], 0));
+      const w = DC.solve(G, rhs);
+      // df(λ) = tr(Φ (ΦᵀΦ + λI)⁻¹ Φᵀ) = Σ_i φ_iᵀ G⁻¹ φ_i
+      let df = 0;
+      for (const r of Phi) { const z = DC.solve(G, r); df += r.reduce((s, v, k) => s + v * z[k], 0); }
+      const fit = (x) => feats(x).reduce((s, v, k) => s + v * w[k], 0);
+      const wn = Math.sqrt(w.reduce((s, v) => s + v * v, 0));
+      plot.draw([0, 1], [-2.2, 2.2], (ctx, p) => {
+        p.curve(f, p.col.light, 1.5, [5, 4]);
+        p.curve(fit, ORANGE, 2.5, [], 400);
+        p.dots(xs, ys, BLUE, 3.5, 0.8);
+      });
+      caption.innerHTML = DC.legend([
+        { color: BLUE, label: "data" }, { color: ORANGE, label: "ridge fit" }, { color: "gray", label: "true function", dash: true },
+      ]) + `<br>λ = ${lam.toExponential(1)} · effective degrees of freedom df(λ) = ${df.toFixed(1)} (out of ${K}) · ‖w‖ = ${wn.toFixed(1)}. ` +
+        "Small λ: the fit chases the noise with huge, cancelling weights. Large λ: everything is shrunk towards zero.";
+    }
+    sample(); render();
+  };
+
+  // ---------------------------------------------------------------------------
   document$.subscribe(() => {
     document.querySelectorAll(".widget[data-widget]").forEach((el) => {
       if (el.dataset.mounted) return;
