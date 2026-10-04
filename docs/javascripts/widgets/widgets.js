@@ -508,6 +508,61 @@
   };
 
   // ---------------------------------------------------------------------------
+  // LASSO path: coordinate descent on a small correlated design; slide lambda along the path.
+  W.lasso = (root) => {
+    const n = 60, p = 12, truth = [2, -1.5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const lams = Array.from({ length: 80 }, (_, i) => Math.pow(10, 0.4 - (3 * i) / 79));
+    let X, y, path;
+    const vals = DC.controls(root, [
+      { type: "range", id: "li", label: "λ", min: 0, max: 79, step: 1, value: 30, fmt: (i) => lams[i].toFixed(3) },
+      { type: "range", id: "rho", label: "feature correlation", min: 0, max: 0.9, step: 0.1, value: 0.5, fmt: (v) => v.toFixed(1) },
+      { type: "button", id: "re", label: "New data" },
+    ], (id) => { if (id !== "li") sample(); render(); });
+    const plot = new DC.Plot(root, { height: 240, xlabel: "log₁₀ λ  (λ decreases to the right)", ylabel: "coefficient" });
+    const plot2 = new DC.Plot(root, { height: 150, xlabel: "feature index (first 3 are truly nonzero)" });
+    const caption = document.createElement("div");
+    caption.className = "caption";
+    root.appendChild(caption);
+
+    function cd(lam, b) {
+      const col = Array.from({ length: p }, (_, j) => X.reduce((s, r) => s + r[j] * r[j], 0) / n);
+      const r = y.map((yi, i) => yi - X[i].reduce((s, v, j) => s + v * b[j], 0));
+      for (let it = 0; it < 100; it++) for (let j = 0; j < p; j++) {
+        let z = 0;
+        for (let i = 0; i < n; i++) { r[i] += X[i][j] * b[j]; z += X[i][j] * r[i]; }
+        z /= n;
+        b[j] = Math.sign(z) * Math.max(Math.abs(z) - lam, 0) / col[j];
+        for (let i = 0; i < n; i++) r[i] -= X[i][j] * b[j];
+      }
+      return b;
+    }
+    function sample() {
+      const rho = vals.rho;
+      X = Array.from({ length: n }, () => { const f = DC.randn(); return Array.from({ length: p }, () => Math.sqrt(rho) * f + Math.sqrt(1 - rho) * DC.randn()); });
+      y = X.map((r) => r.reduce((s, v, j) => s + v * truth[j], 0) + DC.randn());
+      let b = new Array(p).fill(0);
+      path = lams.map((lam) => (b = cd(lam, b.slice())).slice());
+    }
+    function render() {
+      const i = vals.li, b = path[i], lx = lams.map((l) => Math.log10(l));
+      plot.draw([lx[0], lx[lx.length - 1]], [-2.6, 2.6], (ctx, pl) => {
+        for (let j = 0; j < p; j++) pl.line(lx, path.map((bb) => bb[j]), j < 3 ? BLUE : pl.col.light, j < 3 ? 2 : 1.2);
+        ctx.strokeStyle = ORANGE; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(pl.X(lx[i]), pl.Y(-2.6)); ctx.lineTo(pl.X(lx[i]), pl.Y(2.6)); ctx.stroke();
+      });
+      plot2.draw([-0.5, p - 0.5], [-2.6, 2.6], (ctx, pl) => {
+        pl.dots(truth.map((_, j) => j), truth, GREEN, 5, 0.9);
+        pl.dots(b.map((_, j) => j), b, ORANGE, 4, 1);
+      });
+      const sel = b.map((v, j) => (Math.abs(v) > 1e-8 ? j + 1 : 0)).filter((j) => j);
+      caption.innerHTML = DC.legend([{ color: BLUE, label: "paths of the 3 true features" }, { color: "gray", label: "null features" }, { color: ORANGE, label: "current λ / estimate" }, { color: GREEN, label: "truth" }]) +
+        `<br>λ = ${lams[i].toFixed(3)}: selected features {${sel.join(", ") || "none"}}. ` +
+        "Large λ: everything is zero. As λ drops, variables enter one at a time (true ones first, usually), and the estimates are shrunk toward 0. Raise the correlation to see false variables sneak in earlier.";
+    }
+    sample(); render();
+  };
+
+  // ---------------------------------------------------------------------------
   document$.subscribe(() => {
     document.querySelectorAll(".widget[data-widget]").forEach((el) => {
       if (el.dataset.mounted) return;

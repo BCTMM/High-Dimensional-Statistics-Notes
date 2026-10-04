@@ -218,7 +218,8 @@
       const Y = (y) => H - m.b - ((y - y0) / (y1 - y0)) * (H - m.t - m.b);
       ctx.font = "11px sans-serif";
       ctx.fillStyle = col.fg; ctx.strokeStyle = col.lightest; ctx.lineWidth = 1;
-      const ticks = (a, b, n = 5) => {
+      const ticks = (a0, b0, n = 5) => {
+        const a = Math.min(a0, b0), b = Math.max(a0, b0);   // works for reversed axes too
         const step = Math.pow(10, Math.floor(Math.log10((b - a) / n)));
         const k = [1, 2, 5, 10].find((f) => (b - a) / (f * step) <= n) * step;
         const out = [];
