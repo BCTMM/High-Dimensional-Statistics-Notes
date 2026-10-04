@@ -1,0 +1,4 @@
+# only needed to regenerate figures (scripts/figures/*.py)
+numpy
+scipy
+matplotlib

@@ -1,0 +1,186 @@
+# Single source of truth for the notes.
+#
+# - Sidebar: tracks in the order listed, notes in the order listed within each track.
+# - Daily order: computed by hooks/curriculum.py as a topological order of the
+#   prerequisite graph that interleaves tracks (no note appears before its prereqs,
+#   consecutive days come from different tracks when possible).
+# - A note is "published" when docs/notes/<slug>.md exists. Unpublished notes
+#   appear only on the Roadmap page.
+
+tracks:
+  - id: t0
+    title: "Toolbox"
+    notes:
+      - slug: courant-fischer-weyl
+        title: "Eigenvalue variational principles: Courant–Fischer & Weyl"
+      - slug: davis-kahan
+        title: "Davis–Kahan: how eigenvectors move"
+        prereqs: [courant-fischer-weyl]
+      - slug: matrix-calculus
+        title: "Matrix calculus & trace tricks"
+      - slug: exponential-families
+        title: "Exponential families"
+      - slug: fisher-kl-cramer-rao
+        title: "Fisher information, KL divergence & Cramér–Rao"
+        prereqs: [exponential-families]
+      - slug: convexity-kkt
+        title: "Convexity, subgradients & KKT conditions"
+      - slug: proximal-operators
+        title: "Proximal operators, ISTA & FISTA"
+        prereqs: [convexity-kkt]
+      - slug: bayesian-linear-regression
+        title: "Bayesian linear regression"
+        prereqs: [ols-gauss-markov]
+
+  - id: a
+    title: "High-dimensional probability"
+    notes:
+      - slug: high-dim-geometry
+        title: "The strange geometry of high dimensions"
+      - slug: subgaussian-subexponential
+        title: "Sub-Gaussian & sub-exponential tails"
+      - slug: hoeffding-bernstein
+        title: "Hoeffding & Bernstein inequalities"
+        prereqs: [subgaussian-subexponential]
+      - slug: matrix-bernstein
+        title: "Matrix Bernstein"
+        prereqs: [hoeffding-bernstein, courant-fischer-weyl]
+      - slug: johnson-lindenstrauss
+        title: "Johnson–Lindenstrauss"
+        prereqs: [subgaussian-subexponential]
+
+  - id: b
+    title: "Random matrix theory"
+    notes:
+      - slug: gaussian-ensembles
+        title: "Gaussian ensembles & eigenvalue repulsion"
+      - slug: stieltjes-resolvent
+        title: "The Stieltjes transform & the resolvent"
+        prereqs: [gaussian-ensembles]
+      - slug: wigner-semicircle
+        title: "Wigner's semicircle law"
+        prereqs: [stieltjes-resolvent]
+      - slug: marchenko-pastur
+        title: "The Marchenko–Pastur law"
+        star: true
+        prereqs: [wigner-semicircle]
+      - slug: free-probability-r
+        title: "Free probability I: freeness & the R-transform"
+        prereqs: [wigner-semicircle]
+      - slug: free-probability-s
+        title: "Free probability II: the S-transform & products"
+        prereqs: [free-probability-r, marchenko-pastur]
+      - slug: tracy-widom
+        title: "Tracy–Widom: fluctuations at the edge"
+        prereqs: [wigner-semicircle]
+      - slug: bbp-spiked
+        title: "The BBP transition & spiked covariance"
+        prereqs: [marchenko-pastur, davis-kahan]
+      - slug: deterministic-equivalents
+        title: "Deterministic equivalents"
+        prereqs: [marchenko-pastur, free-probability-r]
+      - slug: heavy-tailed-rmt
+        title: "Heavy-tailed random matrices"
+        prereqs: [marchenko-pastur]
+
+  - id: c
+    title: "Covariance estimation & quant"
+    notes:
+      - slug: markowitz-estimation-error
+        title: "Markowitz & the curse of estimation error"
+      - slug: james-stein
+        title: "The James–Stein estimator"
+        star: true
+      - slug: ledoit-wolf
+        title: "Ledoit–Wolf linear shrinkage"
+        star: true
+        prereqs: [james-stein, marchenko-pastur]
+      - slug: clipping-factor-models
+        title: "Eigenvalue clipping & factor models"
+        prereqs: [bbp-spiked, markowitz-estimation-error]
+      - slug: rotational-invariant-estimators
+        title: "Rotationally invariant estimators (Bouchaud–Potters)"
+        star: true
+        prereqs: [clipping-factor-models, free-probability-r]
+      - slug: nonlinear-shrinkage
+        title: "Nonlinear shrinkage (Ledoit–Wolf 2017+)"
+        prereqs: [rotational-invariant-estimators, ledoit-wolf]
+
+  - id: d
+    title: "Regression & shrinkage"
+    notes:
+      - slug: ols-gauss-markov
+        title: "OLS & Gauss–Markov: the geometric view"
+      - slug: ridge
+        title: "Ridge regression & Tikhonov regularization"
+        star: true
+        prereqs: [ols-gauss-markov]
+      - slug: ridge-high-dim
+        title: "Ridge in high dimensions & double descent"
+        prereqs: [ridge, deterministic-equivalents]
+      - slug: lasso
+        title: "The LASSO: geometry & soft thresholding"
+        star: true
+        prereqs: [ridge, proximal-operators]
+      - slug: lars
+        title: "LARS & the LASSO path"
+        prereqs: [lasso]
+      - slug: elastic-net
+        title: "The elastic net"
+        prereqs: [lasso]
+      - slug: glm
+        title: "Generalized linear models & IRLS"
+        prereqs: [ols-gauss-markov, exponential-families]
+      - slug: quantile-regression
+        title: "Quantile regression"
+        prereqs: [ols-gauss-markov, convexity-kkt]
+      - slug: robust-m-estimators
+        title: "Robust regression & M-estimators"
+        prereqs: [ols-gauss-markov, convexity-kkt]
+      - slug: debiased-lasso
+        title: "The debiased LASSO"
+        star: true
+        prereqs: [lasso]
+      - slug: double-ml
+        title: "Neyman orthogonality & double/debiased ML"
+        star: true
+        prereqs: [debiased-lasso]
+
+  - id: u
+    title: "Uncertainty quantification"
+    notes:
+      - slug: bootstrap
+        title: "The bootstrap"
+      - slug: delta-sandwich
+        title: "The delta method & sandwich standard errors"
+        prereqs: [ols-gauss-markov, fisher-kl-cramer-rao]
+      - slug: hac-newey-west
+        title: "HAC standard errors (Newey–West)"
+        prereqs: [delta-sandwich]
+      - slug: laplace-credible
+        title: "Credible intervals & the Laplace approximation"
+        prereqs: [bayesian-linear-regression, fisher-kl-cramer-rao]
+      - slug: calibration-scoring
+        title: "Calibration & proper scoring rules"
+      - slug: conformal-prediction
+        title: "Split conformal prediction"
+      - slug: conformalized-quantile-regression
+        title: "Conformalized quantile regression"
+        prereqs: [conformal-prediction, quantile-regression]
+      - slug: jackknife-plus
+        title: "Jackknife+ & CV+"
+        prereqs: [conformal-prediction]
+      - slug: conformal-under-shift
+        title: "Conformal under distribution shift"
+        prereqs: [conformal-prediction]
+      - slug: multiple-testing-fdr
+        title: "Multiple testing, FDR & Benjamini–Hochberg"
+      - slug: knockoffs
+        title: "Model-X knockoffs"
+        prereqs: [multiple-testing-fdr, lasso]
+      - slug: post-selection-inference
+        title: "Post-selection inference"
+        prereqs: [lasso]
+      - slug: high-dim-mle
+        title: "When classical inference breaks: the high-dimensional MLE"
+        prereqs: [glm, deterministic-equivalents]
