@@ -1,4 +1,4 @@
-# Daily Concepts — working notes for Claude
+# When p Meets n — working notes for Claude
 
 A MkDocs Material site of daily study notes (RMT, high-dim probability, covariance/quant, regression & shrinkage,
 uncertainty quantification), deployed to GitHub Pages by `.github/workflows/deploy.yml` on push to `main`.

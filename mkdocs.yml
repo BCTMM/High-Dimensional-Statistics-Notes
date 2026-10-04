@@ -1,5 +1,5 @@
-site_name: Daily Concepts
-site_description: A daily note on random matrices, high-dimensional statistics, shrinkage and uncertainty.
+site_name: When p Meets n
+site_description: Daily notes on random matrices, shrinkage & uncertainty — statistics when the dimension is comparable to the sample size.
 site_url: https://bctmm.github.io/High-Dimensional-Statistics-Notes/
 repo_url: https://github.com/BCTMM/High-Dimensional-Statistics-Notes
 

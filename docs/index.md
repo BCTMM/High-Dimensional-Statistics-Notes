@@ -3,9 +3,10 @@ hide:
   - toc
 ---
 
-# Daily Concepts
+# When p Meets n
 
-One note a day on random matrix theory, high-dimensional probability, covariance estimation,
+One note a day on what happens to statistics when the number of variables $p$ is comparable to the
+number of samples $n$: random matrix theory, high-dimensional probability, covariance estimation,
 regression & shrinkage, and uncertainty quantification. These are the tools behind modern ML theory and quantitative finance.
 
 <div id="today-card" markdown>Loading…</div>
