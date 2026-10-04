@@ -3,7 +3,9 @@
 !!! tldr "TL;DR"
     If you have no prior information about the eigenvectors of the true covariance, the natural estimators keep the **sample eigenvectors** and only change the eigenvalues: $\hat\Sigma = \sum_i\xi_iu_iu_i^\top$. The best possible choice (the oracle) is $\xi_i = u_i^\top\Sigma u_i$, the true variance along each sample eigenvector.
     That looks unknowable, but Ledoit & Péché (2011) showed that in high dimension it can be computed from the sample spectrum alone:
+    
     $$\xi_i\approx\frac{\lambda_i}{\big|1 - q + q\,z_i\,g(z_i)\big|^2},\qquad z_i = \lambda_i - i\eta,$$
+    
     with $g$ the sample Stieltjes transform. This **rotationally invariant estimator** (RIE), developed into a practical tool by Bun, Bouchaud & Potters, contains clipping and Ledoit–Wolf as crude approximations and essentially matches the oracle.
 
 ## Why care?

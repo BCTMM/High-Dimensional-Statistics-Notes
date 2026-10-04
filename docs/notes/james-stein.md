@@ -2,7 +2,9 @@
 
 !!! tldr "TL;DR"
     Observe $X\sim N(\theta,\sigma^2I_d)$ and estimate the vector $\theta$. The obvious estimator, $X$ itself (the MLE, unbiased and minimax), is **beaten everywhere** when $d\ge3$ by
+    
     $$\hat\theta_{\text{JS}} = \Big(1 - \frac{(d-2)\sigma^2}{\|X\|^2}\Big)X .$$
+    
     Shrinking all coordinates toward a common point lowers the *total* squared error for every $\theta$, even when the coordinates are unrelated. The proof is a
     two-line integration by parts (Stein's lemma), and the intuition is empirical Bayes: the data estimate how much to shrink. This is the seed of all shrinkage
     estimation, from Ledoit–Wolf covariance cleaning to Tweedie's formula in diffusion models.

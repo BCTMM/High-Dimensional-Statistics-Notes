@@ -26,12 +26,12 @@ The objective is strongly convex, so the minimizer exists and is unique. By the 
 
 | $g(x)$ | $\operatorname{prox}_{\lambda g}(v)$ |
 |---|---|
-| $\|x\|_1$ | soft-thresholding: $\operatorname{sign}(v_i)(|v_i| - \lambda)_+$ |
-| $\frac12\|x\|^2$ | $v/(1+\lambda)$ (ridge-like shrinkage) |
+| $\lVert x\rVert_1$ | soft-thresholding: $\operatorname{sign}(v_i)(\lvert v_i\rvert - \lambda)_+$ |
+| $\frac12\lVert x\rVert^2$ | $v/(1+\lambda)$ (ridge-like shrinkage) |
 | indicator of a convex set $C$ | Euclidean projection $\Pi_C(v)$ |
-| $\|x\|_2$ (group norm) | block soft-thresholding: $\big(1 - \frac{\lambda}{\|v\|}\big)_+v$ |
-| nuclear norm $\|X\|_*$ | singular-value thresholding: $U\operatorname{diag}((\sigma_i - \lambda)_+)V^\top$ |
-| $\|x\|_1 + \frac\alpha2\|x\|^2$ (elastic net) | $\frac{1}{1+\lambda\alpha}\operatorname{soft}(v,\lambda)$ |
+| $\lVert x\rVert_2$ (group norm) | block soft-thresholding: $\big(1 - \frac{\lambda}{\lVert v\rVert}\big)_+v$ |
+| nuclear norm $\lVert X\rVert_*$ | singular-value thresholding: $U\operatorname{diag}((\sigma_i - \lambda)_+)V^\top$ |
+| $\lVert x\rVert_1 + \frac\alpha2\lVert x\rVert^2$ (elastic net) | $\frac{1}{1+\lambda\alpha}\operatorname{soft}(v,\lambda)$ |
 
 **Key property: firm nonexpansiveness.** $\|\operatorname{prox}(u) - \operatorname{prox}(v)\|^2\le\langle\operatorname{prox}(u) - \operatorname{prox}(v), u - v\rangle$. In particular, prox maps are 1-Lipschitz, so they never amplify errors. This is what makes proximal iterations stable.
 

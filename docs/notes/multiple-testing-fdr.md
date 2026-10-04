@@ -135,7 +135,7 @@ samples or stronger effects. That is the logic behind the "deflated Sharpe ratio
         $\E V = 100\times0.05 = 5$. $\P(V\ge1) = 1 - 0.95^{100}\approx0.994$. Šidák: $1 - (1-\alpha')^{100} = 0.05$ gives $\alpha' = 1 - 0.95^{1/100}\approx5.13\times10^{-4}$, slightly larger than Bonferroni's $5\times10^{-4}$.
 
 !!! question "Exercise 2 · BH by hand"
-    Ten $p$-values: $0.001, 0.008, 0.012, 0.030, 0.041, 0.045, 0.20, 0.35, 0.60, 0.90$. Which hypotheses do Bonferroni, Holm and BH reject at level $0.05$?
+    Ten $p$-values: 0.001, 0.008, 0.012, 0.030, 0.041, 0.045, 0.20, 0.35, 0.60, 0.90. Which hypotheses do Bonferroni, Holm and BH reject at level $0.05$?
 
     ??? success "Solution"
         Bonferroni: threshold $0.005$, so only $0.001$ (1 rejection).

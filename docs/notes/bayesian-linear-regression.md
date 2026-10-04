@@ -2,7 +2,9 @@
 
 !!! tldr "TL;DR"
     Put a Gaussian prior on the coefficients, $\beta\sim N(0,\alpha^{-1}I)$, and keep Gaussian noise with precision $\beta_n = 1/\sigma^2$. The posterior is Gaussian in closed form:
+    
     $$S = (\alpha I + \beta_nX^\top X)^{-1},\qquad m = \beta_nSX^\top y .$$
+    
     The posterior **mean is ridge regression** with $\lambda = \alpha/\beta_n$, but you also get a **full distribution**. The predictive variance $\sigma^2 + x^\top Sx$ separates irreducible noise from parameter uncertainty, which grows away from the data. Hyperparameters can be learned by maximizing the closed-form **marginal likelihood (evidence)**, and the same algebra underlies Kalman filters, Gaussian processes and Thompson sampling.
 
 ## Why care?

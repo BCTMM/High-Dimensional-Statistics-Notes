@@ -2,7 +2,9 @@
 
 !!! tldr "TL;DR"
     Scalar concentration extends to sums of independent random **matrices**. If $X_1,\dots,X_n$ are independent, mean-zero, symmetric $d\times d$ matrices with $\|X_k\|\le L$, and $\sigma^2 = \big\|\sum_k\E X_k^2\big\|$, then
+    
     $$\P\Big(\Big\|\sum_kX_k\Big\|\ge t\Big)\le2d\,\exp\Big(-\frac{t^2/2}{\sigma^2 + Lt/3}\Big),\qquad\E\Big\|\sum_kX_k\Big\|\lesssim\sqrt{2\sigma^2\log(2d)} + \tfrac{L}{3}\log(2d).$$
+    
     The only price for going from scalars to matrices is a factor $d$ in the tail (a $\log d$ in the expectation), and even that can be replaced by an *effective* dimension. This one inequality covers covariance estimation, randomized linear algebra, graph sparsification, matrix completion and random-feature approximations.
 
 ## Why care?

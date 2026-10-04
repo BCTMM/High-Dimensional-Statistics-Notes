@@ -2,7 +2,9 @@
 
 !!! tldr "TL;DR"
     The LASSO is good at estimation but bad for inference: its coefficients are shrunk toward zero and their distribution has point masses at 0, so there are no valid confidence intervals. The **debiased (desparsified) LASSO** adds back a one-step correction,
+    
     $$\hat b = \hat\beta + \frac1nM X^\top(y - X\hat\beta),$$
+    
     where $M$ is an approximate inverse of $\hat\Sigma = X^\top X/n$ (e.g. from nodewise LASSO regressions). If the truth is sparse enough ($s\log p\ll\sqrt n$), each coordinate is approximately Gaussian, $\sqrt n(\hat b_j - \beta_j)\approx N\big(0,\ \sigma^2(M\hat\Sigma M^\top)_{jj}\big)$, which gives confidence intervals and $p$-values for **every** coefficient even when $p > n$.
 
 ## Why care?

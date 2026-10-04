@@ -2,7 +2,9 @@
 
 !!! tldr "TL;DR"
     Ledoit and Wolf's **nonlinear shrinkage** keeps the sample eigenvectors and replaces each sample eigenvalue $\lambda_i$ by an estimate of the oracle $u_i^\top\Sigma u_i$. Their **analytical** version (2020) computes it in one pass from a kernel density estimate $\tilde f$ of the sample eigenvalues and its Hilbert transform $\mathcal H\tilde f$:
+    
     $$d_i = \frac{\lambda_i}{\big(\pi q\lambda_i\tilde f(\lambda_i)\big)^2 + \big(1 - q - \pi q\lambda_i\,\mathcal H\tilde f(\lambda_i)\big)^2}.$$
+    
     This is the same Ledoit–Péché formula as the [RIE](rotational-invariant-estimators.md), written in "real" coordinates. It is fast ($O(p^2)$ after the eigendecomposition), tuning-free, asymptotically optimal among rotation-equivariant estimators, and a standard benchmark for large covariance matrices.
 
 ## Why care?

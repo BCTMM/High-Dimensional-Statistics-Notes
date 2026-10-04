@@ -2,7 +2,9 @@
 
 !!! tldr "TL;DR"
     Random-matrix quantities that are smooth functionals of a resolvent, such as normalized traces $\frac1p\tr A(\hat\Sigma + \lambda)^{-1}$ and quadratic forms $u^\top(\hat\Sigma + \lambda)^{-1}v$, concentrate around **deterministic** values computable from the population covariance alone. For a sample covariance $\hat\Sigma$ of $n$ samples, the key statement is
+    
     $$\lambda(\hat\Sigma + \lambda I)^{-1}\ \asymp\ \kappa\,(\Sigma + \kappa I)^{-1},\qquad\kappa - \lambda = \frac{\kappa}{n}\tr\big[\Sigma(\Sigma + \kappa I)^{-1}\big].$$
+    
     Sampling noise acts like **extra ridge regularization**: the effective penalty $\kappa$ exceeds $\lambda$, and stays positive even at $\lambda = 0$ when $p > n$. This one fixed-point equation yields exact formulas for the test error of ridge regression, random features and kernel methods in high dimension.
 
 ## Why care?

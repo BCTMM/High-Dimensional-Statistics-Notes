@@ -99,3 +99,21 @@ img.fig {
   border-bottom: 1px dotted var(--md-default-fg-color--light);
   cursor: help;
 }
+
+/* Long equations: scroll inside their own box on small screens instead of widening the page */
+.md-typeset .katex-display {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.2em 0;
+}
+.md-typeset .katex { position: relative; }
+.md-typeset .katex .katex-mathml {            /* screen-reader copy: keep it, but give it no layout width */
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(1px, 1px, 1px, 1px);
+}
+.md-typeset .md-typeset__table { max-width: 100%; overflow-x: auto; }
+.md-typeset__table table:not([class]) { display: table; }
+.md-typeset__scrollwrap { overflow-x: auto; }
+/* centred equations that are wider than the screen must overflow to the right only (so they can be scrolled) */
+.md-typeset .katex-display { text-align: center; }
+.md-typeset .katex-display > .katex { display: inline-block; text-align: initial; max-width: none; }

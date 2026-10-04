@@ -3,7 +3,9 @@
 !!! tldr "TL;DR"
     Estimate the covariance of $N$ uncorrelated unit-variance variables from $T$ samples. Even though every true eigenvalue equals 1, the sample eigenvalues spread over
     $[(1-\sqrt q)^2,\,(1+\sqrt q)^2]$ with $q = N/T$, following the **Marchenko–Pastur density**
+    
     $$\rho_q(x) = \frac{\sqrt{(\lambda_+ - x)(x - \lambda_-)}}{2\pi qx}.$$
+    
     For $q > 1$ a fraction $1 - 1/q$ of the eigenvalues are exactly zero. The law comes from a two-line self-consistent equation for the Stieltjes transform, extends to any true covariance
     (the MP equation), and gives the **noise floor** against which signal eigenvalues in finance, PCA and neural-network weight matrices are judged.
 

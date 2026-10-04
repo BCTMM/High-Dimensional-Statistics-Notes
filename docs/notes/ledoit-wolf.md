@@ -2,7 +2,9 @@
 
 !!! tldr "TL;DR"
     Replace the sample covariance $S$ by a convex combination with a simple target:
+    
     $$\hat\Sigma = (1-\rho)\,S + \rho\,mI,\qquad m = \tfrac1p\tr S .$$
+    
     The best intensity $\rho$ (in expected Frobenius loss) is **noise / (noise + signal)**: $\rho^* = \beta^2/(\alpha^2 + \beta^2)$, where $\beta^2 = \E\|S - \Sigma\|^2$ is the estimation noise and $\alpha^2 = \|\Sigma - mI\|^2$ is the true dispersion.
     Ledoit and Wolf showed that both quantities can be estimated consistently from the data, giving a tuning-free estimator that is always well-conditioned, invertible even when $p > n$, and
     much better than $S$ whenever $p/n$ is not small. It is the James–Stein idea applied to covariance matrices.
