@@ -1,7 +1,7 @@
 site_name: Daily Concepts
 site_description: A daily note on random matrices, high-dimensional statistics, shrinkage and uncertainty.
-# Set to https://<user>.github.io/<repo>/ once the GitHub repo exists.
-site_url: ""
+site_url: https://bctmm.github.io/High-Dimensional-Statistics-Notes/
+repo_url: https://github.com/BCTMM/High-Dimensional-Statistics-Notes
 
 hooks:
   - hooks/curriculum.py
