@@ -288,6 +288,59 @@
   };
 
   // ---------------------------------------------------------------------------
+  // Split conformal: distribution of coverage over calibration draws (Beta law).
+  W.conformal = (root) => {
+    const trials = 400;
+    const sd = (x) => 0.1 + 0.3 * x;              // noise level; model = true mean, score = |y − μ(x)|
+    const erf = (x) => {                          // Abramowitz–Stegun 7.1.26
+      const t = 1 / (1 + 0.3275911 * Math.abs(x));
+      const y = 1 - t * (0.254829592 + t * (-0.284496736 + t * (1.421413741 + t * (-1.453152027 + t * 1.061405429)))) * Math.exp(-x * x);
+      return x >= 0 ? y : -y;
+    };
+    const xgrid = Array.from({ length: 200 }, (_, i) => (5 * (i + 0.5)) / 200);
+    // Exact test coverage of the band ±q for x ~ Unif(0,5): average of P(|N(0, sd(x)²)| ≤ q).
+    const coverage = (q) => xgrid.reduce((s, x) => s + erf(q / (sd(x) * Math.SQRT2)), 0) / xgrid.length;
+    const vals = DC.controls(root, [
+      { type: "range", id: "alpha", label: "α", min: 0.05, max: 0.3, step: 0.01, value: 0.1, fmt: (v) => v.toFixed(2) },
+      { type: "range", id: "logn", label: "calibration size n", min: 1, max: 3, step: 0.05, value: 1.7, fmt: (v) => Math.round(10 ** v) },
+      { type: "button", id: "re", label: "Resample" },
+    ], () => render());
+    const plot = new DC.Plot(root, { height: 260, xlabel: "test coverage of one conformal band (each trial = a fresh calibration set)", ylabel: "density" });
+    const caption = document.createElement("div");
+    caption.className = "caption";
+    root.appendChild(caption);
+
+    function render() {
+      const alpha = vals.alpha, n = Math.round(10 ** vals.logn);
+      const k = Math.ceil((n + 1) * (1 - alpha));
+      const covs = [];
+      for (let t = 0; t < trials; t++) {
+        const scores = Array.from({ length: n }, () => { const x = 5 * Math.random(); return Math.abs(sd(x) * DC.randn()); }).sort((a, b) => a - b);
+        covs.push(k > n ? 1 : coverage(scores[k - 1]));
+      }
+      const lo = Math.max(0, 1 - alpha - 0.3);
+      const h = DC.histogram(covs, lo, 1, 40);
+      const a = k, b = n - k + 1;                 // coverage ~ Beta(k, n − k + 1)
+      const lB = lgamma(a) + lgamma(b) - lgamma(a + b);
+      const beta = (c) => (c <= 0 || c >= 1 ? 0 : Math.exp((a - 1) * Math.log(c) + (b - 1) * Math.log(1 - c) - lB));
+      const ymax = Math.max(...h.map((x) => x.y), beta(Math.min(0.999, (a - 1) / (a + b - 2)))) * 1.1;
+      plot.draw([lo, 1], [0, ymax], (ctx, p) => {
+        p.bars(h);
+        if (k <= n) p.curve(beta, ORANGE, 2, [], 400);
+        ctx.strokeStyle = GREEN; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+        ctx.beginPath(); ctx.moveTo(p.X(1 - alpha), p.Y(0)); ctx.lineTo(p.X(1 - alpha), p.Y(ymax)); ctx.stroke(); ctx.setLineDash([]);
+      });
+      const mean = covs.reduce((s, c) => s + c, 0) / trials;
+      const below = covs.filter((c) => c < 1 - alpha - 0.02).length / trials;
+      caption.innerHTML = DC.legend([{ color: ORANGE, label: `Beta(${a}, ${b}) theory` }, { color: GREEN, label: "target 1 − α", dash: true }]) +
+        `<br>Average coverage ${mean.toFixed(3)} ≥ 1 − α = ${(1 - alpha).toFixed(2)} (the guarantee). ` +
+        (k > n ? "n is too small for this α: the band is infinite." :
+          `But for a single calibration set, coverage falls below ${(1 - alpha - 0.02).toFixed(2)} in ${(100 * below).toFixed(0)}% of trials. Larger n concentrates it.`);
+    }
+    render();
+  };
+
+  // ---------------------------------------------------------------------------
   document$.subscribe(() => {
     document.querySelectorAll(".widget[data-widget]").forEach((el) => {
       if (el.dataset.mounted) return;
