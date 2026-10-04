@@ -563,6 +563,59 @@
   };
 
   // ---------------------------------------------------------------------------
+  // Double descent: exact high-dimensional ridge risk (isotropic features) + a quick simulation.
+  W.doubledescent = (root) => {
+    const vals = DC.controls(root, [
+      { type: "range", id: "loglam", label: "log₁₀ λ", min: -4, max: 1, step: 0.1, value: -1, fmt: (v) => v.toFixed(1) },
+      { type: "range", id: "snr", label: "SNR r²/σ²", min: 0.2, max: 5, step: 0.1, value: 1, fmt: (v) => v.toFixed(1) },
+      { type: "button", id: "sim", label: "Simulate (n = 60)" },
+    ], (id) => { if (id === "sim") simulate(); else { pts = []; render(); } });
+    const plot = new DC.Plot(root, { height: 280, xlabel: "γ = p / n", ylabel: "excess test error / σ²" });
+    const caption = document.createElement("div");
+    caption.className = "caption";
+    root.appendChild(caption);
+    let pts = [];
+    const kap = (lam, g) => ((lam + g - 1) + Math.sqrt((lam + g - 1) ** 2 + 4 * lam)) / 2;
+    const risk = (lam, g, snr) => { const k = kap(lam, g), df2 = g / (1 + k) ** 2; return ((k * k * snr) / (1 + k) ** 2 + df2) / (1 - df2); };
+
+    function simulate() {
+      const n = 60, lam = 10 ** vals.loglam, snr = vals.snr;
+      pts = [];
+      for (const g of [0.3, 0.6, 0.85, 1.2, 1.6, 2.4, 3.5]) {
+        const p = Math.round(g * n); let acc = 0;
+        for (let rep = 0; rep < 4; rep++) {
+          const beta = Array.from({ length: p }, () => (DC.randn() * Math.sqrt(snr)) / Math.sqrt(p));
+          const X = Array.from({ length: n }, () => Array.from({ length: p }, DC.randn));
+          const y = X.map((row) => row.reduce((s, v, j) => s + v * beta[j], 0) + DC.randn());
+          // dual ridge: b = Xᵀ (XXᵀ + nλ I)⁻¹ y   (valid for any p; λ → 0 gives min-norm least squares when p > n)
+          const K = X.map((ri, i) => X.map((rj, j) => ri.reduce((s, v, k) => s + v * rj[k], 0) + (i === j ? n * Math.max(lam, 1e-8) : 0)));
+          const a = DC.solve(K, y);
+          const b = beta.map((_, j) => X.reduce((s, row, i) => s + row[j] * a[i], 0));
+          acc += b.reduce((s, v, j) => s + (v - beta[j]) ** 2, 0);
+        }
+        pts.push([g, acc / 4]);
+      }
+      render();
+    }
+    function render() {
+      const lam = 10 ** vals.loglam, snr = vals.snr;
+      const gs = Array.from({ length: 300 }, (_, i) => 0.05 + (3.95 * i) / 299);
+      const ymax = Math.max(3, snr * 1.6);
+      plot.draw([0, 4], [0, ymax], (ctx, p) => {
+        p.line(gs, gs.map((g) => Math.min(risk(1e-12, g, snr), ymax * 2)), ORANGE, 1.8);
+        p.line(gs, gs.map((g) => risk(g / snr, g, snr)), GREEN, 1.8);
+        p.line(gs, gs.map((g) => risk(lam, g, snr)), BLUE, 2.5);
+        p.curve(() => snr, p.col.light, 1.2, [4, 4]);
+        if (pts.length) p.dots(pts.map((q) => q[0]), pts.map((q) => q[1]), BLUE, 4.5, 1);
+      });
+      caption.innerHTML = DC.legend([{ color: BLUE, label: `ridge, λ = ${lam.toExponential(1)}` }, { color: ORANGE, label: "ridgeless (min-norm)" },
+        { color: GREEN, label: "optimal λ = γ/SNR" }, { color: "gray", label: "predicting 0", dash: true }]) +
+        "<br>Curves are the exact asymptotic risk (effective-regularization formula). The ridgeless curve explodes at γ = 1 (interpolation threshold) and comes back down. A little ridge flattens the peak; the optimally tuned ridge has none. Press Simulate to check with real fits.";
+    }
+    render();
+  };
+
+  // ---------------------------------------------------------------------------
   document$.subscribe(() => {
     document.querySelectorAll(".widget[data-widget]").forEach((el) => {
       if (el.dataset.mounted) return;
