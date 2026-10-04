@@ -20,14 +20,10 @@
   };
   const todayStr = () => new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD, local time
 
-  const siteRoot = () => {
-    try {
-      const cfg = JSON.parse(document.getElementById("__config").textContent);
-      return new URL(cfg.base.replace(/\/?$/, "/"), location.href);
-    } catch (e) {
-      return new URL("/", location.href);
-    }
-  };
+  // Site root, derived from this script's own URL (…/javascripts/daily.js). The page's __config "base"
+  // is relative to the page that was first loaded, so it goes stale under navigation.instant.
+  const SCRIPT_SRC = document.currentScript && document.currentScript.src;
+  const siteRoot = () => SCRIPT_SRC ? new URL("../", SCRIPT_SRC) : new URL("/", location.href);
 
   let curriculumPromise = null;
   const curriculum = () => {
