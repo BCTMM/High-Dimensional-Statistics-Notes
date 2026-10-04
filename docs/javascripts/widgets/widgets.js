@@ -341,6 +341,45 @@
   };
 
   // ---------------------------------------------------------------------------
+  // Wigner: eigenvalue histogram for different entry distributions vs the semicircle.
+  W.wigner = (root) => {
+    const samplers = {
+      gauss: () => DC.randn(),
+      rade: () => (Math.random() < 0.5 ? -1 : 1),
+      sparse: (N) => { const p = 3 / N; return Math.random() < p ? (Math.random() < 0.5 ? -1 : 1) / Math.sqrt(p) : 0; },
+      t: () => DC.randn() / Math.sqrt(DC.chi(2.5) ** 2 / 2.5) / Math.sqrt(5),
+    };
+    const vals = DC.controls(root, [
+      { type: "select", id: "dist", label: "entries", value: "rade",
+        options: [["gauss", "Gaussian"], ["rade", "Rademacher ±1"], ["sparse", "sparse: ~3 nonzeros per row"], ["t", "Student-t(2.5): heavy tails"]] },
+      { type: "range", id: "N", label: "N", min: 20, max: 400, step: 10, value: 200 },
+      { type: "button", id: "re", label: "Resample" },
+    ], () => render());
+    const plot = new DC.Plot(root, { height: 260, xlabel: "eigenvalue of X / √N", ylabel: "density" });
+    const caption = document.createElement("div");
+    caption.className = "caption";
+    root.appendChild(caption);
+
+    function render() {
+      const N = vals.N, f = samplers[vals.dist];
+      const A = Array.from({ length: N }, () => new Array(N).fill(0));
+      for (let i = 0; i < N; i++) for (let j = i; j < N; j++) A[i][j] = A[j][i] = f(N) / Math.sqrt(N);
+      const ev = DC.eigSymFast(A);
+      const h = DC.histogram(ev, -3, 3, 60);
+      const sc = (x) => (Math.abs(x) < 2 ? Math.sqrt(4 - x * x) / (2 * Math.PI) : 0);
+      plot.draw([-3, 3], [0, Math.max(0.5, ...h.map((b) => b.y)) * 1.05], (ctx, p) => { p.bars(h); p.curve(sc, ORANGE, 2, [], 400); });
+      const out = ev.filter((x) => Math.abs(x) > 2.2).length;
+      caption.innerHTML = DC.legend([{ color: ORANGE, label: "semicircle" }]) +
+        `<br>N = ${N}: λ_min = ${ev[0].toFixed(2)}, λ_max = ${ev[N - 1].toFixed(2)}, ${out} eigenvalue(s) beyond ±2.2. ` +
+        ({ gauss: "The Gaussian case: semicircle with sharp edges at ±2.",
+           rade: "Coin-flip entries give the same law: universality.",
+           sparse: "With O(1) nonzeros per row the law is different (spiky, with tails). The semicircle needs the number of nonzeros per row → ∞.",
+           t: "Finite variance but no 4th moment: big entries create outlier eigenvalues far beyond 2, and the bulk converges slowly." })[vals.dist];
+    }
+    render();
+  };
+
+  // ---------------------------------------------------------------------------
   document$.subscribe(() => {
     document.querySelectorAll(".widget[data-widget]").forEach((el) => {
       if (el.dataset.mounted) return;
