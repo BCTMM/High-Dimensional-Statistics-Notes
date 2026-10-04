@@ -380,6 +380,68 @@
   };
 
   // ---------------------------------------------------------------------------
+  // Marchenko–Pastur: spectrum of a sample covariance, with theory from the MP equation.
+  // Complex helpers: [re, im]
+  const cadd = (a, b) => [a[0] + b[0], a[1] + b[1]];
+  const cmul = (a, b) => [a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] * b[0]];
+  const cdiv = (a, b) => { const d = b[0] * b[0] + b[1] * b[1]; return [(a[0] * b[0] + a[1] * b[1]) / d, (a[1] * b[0] - a[0] * b[1]) / d]; };
+  // Solve g = Σ_k w_k / (z − t_k (1 − q + q z g)) by damped fixed-point iteration (convention g = mean 1/(z − λ)).
+  function mpDensity(x, q, ts, ws, eta = 0.01) {
+    const z = [x, eta];
+    let g = cdiv([1, 0], z);
+    for (let it = 0; it < 800; it++) {
+      const a = cadd([1 - q, 0], cmul([q, 0], cmul(z, g)));
+      let gn = [0, 0];
+      for (let k = 0; k < ts.length; k++) gn = cadd(gn, cdiv([ws[k], 0], cadd(z, cmul([-ts[k], 0], a))));
+      g = [0.5 * g[0] + 0.5 * gn[0], 0.5 * g[1] + 0.5 * gn[1]];
+    }
+    return Math.max(0, -g[1] / Math.PI);
+  }
+  W.mp = (root) => {
+    const N = 150;
+    const pops = { id: [[1], [1]], two: [[1, 4], [0.5, 0.5]], spike: [[1, 6], [1 - 1 / N, 1 / N]] };
+    const vals = DC.controls(root, [
+      { type: "range", id: "q", label: "q = N/T", min: 0.1, max: 2, step: 0.05, value: 0.5, fmt: (v) => v.toFixed(2) },
+      { type: "select", id: "pop", label: "true covariance", value: "id",
+        options: [["id", "identity (pure noise)"], ["two", "half eigenvalues 1, half 4"], ["spike", "identity + one spike at 6"]] },
+      { type: "button", id: "re", label: "Resample" },
+    ], () => render());
+    const plot = new DC.Plot(root, { height: 260, xlabel: "eigenvalue of the sample covariance", ylabel: "density" });
+    const caption = document.createElement("div");
+    caption.className = "caption";
+    root.appendChild(caption);
+
+    function render() {
+      const q = vals.q, T = Math.max(2, Math.round(N / q));
+      const [ts, ws] = pops[vals.pop];
+      const sd = Array.from({ length: N }, (_, i) => Math.sqrt(vals.pop === "two" ? (i < N / 2 ? 1 : 4) : vals.pop === "spike" && i === 0 ? 6 : 1));
+      const X = sd.map((s) => Array.from({ length: T }, () => s * DC.randn()));
+      const E = Array.from({ length: N }, () => new Array(N).fill(0));
+      for (let i = 0; i < N; i++) for (let j = i; j < N; j++) {
+        let acc = 0; const a = X[i], b = X[j];
+        for (let t = 0; t < T; t++) acc += a[t] * b[t];
+        E[i][j] = E[j][i] = acc / T;
+      }
+      const ev = DC.eigSymFast(E);
+      const xmax = Math.max(ev[N - 1] * 1.1, vals.pop === "two" ? 4 * (1 + Math.sqrt(q)) ** 2 : (1 + Math.sqrt(q)) ** 2 * 1.15);
+      const nonzero = ev.filter((v) => v > 1e-8);
+      const h = DC.histogram(nonzero, 0, xmax, 60).map((b) => ({ ...b, y: (b.y * nonzero.length) / N }));
+      const xs = Array.from({ length: 220 }, (_, i) => 0.005 + (xmax * i) / 219);
+      const theory = xs.map((x) => mpDensity(x, q, ts, ws));
+      const ymax = Math.max(...h.map((b) => b.y), ...theory.slice(3)) * 1.1;
+      plot.draw([0, xmax], [0, Math.min(ymax, 3)], (ctx, p) => { p.bars(h); p.line(xs, theory, ORANGE, 2); });
+      const zeros = N - nonzero.length;
+      const lo = (1 - Math.sqrt(q)) ** 2, hi = (1 + Math.sqrt(q)) ** 2;
+      caption.innerHTML = DC.legend([{ color: ORANGE, label: "Marchenko–Pastur theory" }]) +
+        `<br>N = ${N}, T = ${T}. Largest eigenvalue ${ev[N - 1].toFixed(2)}, smallest nonzero ${nonzero[0].toFixed(3)}. ` +
+        (vals.pop === "id" ? `All true eigenvalues equal 1, yet the sample ones spread over [${lo.toFixed(2)}, ${hi.toFixed(2)}].` : "") +
+        (vals.pop === "spike" ? ` The spike ${ev[N - 1] > hi + 0.3 ? "pops out of the bulk" : "is hidden in the bulk"} (see the BBP note).` : "") +
+        (zeros > 0 ? ` q > 1: ${zeros} eigenvalues are exactly 0 (not shown); the histogram shows the rest.` : "");
+    }
+    render();
+  };
+
+  // ---------------------------------------------------------------------------
   document$.subscribe(() => {
     document.querySelectorAll(".widget[data-widget]").forEach((el) => {
       if (el.dataset.mounted) return;
