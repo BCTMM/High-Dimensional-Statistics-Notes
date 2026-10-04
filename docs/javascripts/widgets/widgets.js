@@ -4,6 +4,7 @@
   const DC = window.DC;
   const W = DC.widgets;
   const [BLUE, ORANGE, GREEN, PINK] = DC.PALETTE;
+  const GREY_LINE = (p) => p.col.light;
 
   // log Gamma (Lanczos, g=7)
   const LG = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313,
@@ -437,6 +438,71 @@
         (vals.pop === "id" ? `All true eigenvalues equal 1, yet the sample ones spread over [${lo.toFixed(2)}, ${hi.toFixed(2)}].` : "") +
         (vals.pop === "spike" ? ` The spike ${ev[N - 1] > hi + 0.3 ? "pops out of the bulk" : "is hidden in the bulk"} (see the BBP note).` : "") +
         (zeros > 0 ? ` q > 1: ${zeros} eigenvalues are exactly 0 (not shown); the histogram shows the rest.` : "");
+    }
+    render();
+  };
+
+  // ---------------------------------------------------------------------------
+  // BBP: spiked covariance Σ = I + θ e1 e1ᵀ. Top eigenvalue and eigenvector overlap vs theory.
+  W.bbp = (root) => {
+    const N = 150;
+    const vals = DC.controls(root, [
+      { type: "range", id: "theta", label: "spike θ", min: 0, max: 4, step: 0.05, value: 1.5, fmt: (v) => v.toFixed(2) },
+      { type: "range", id: "q", label: "q = N/T", min: 0.1, max: 1.5, step: 0.05, value: 0.5, fmt: (v) => v.toFixed(2) },
+      { type: "button", id: "re", label: "Resample" },
+    ], () => render());
+    const plot = new DC.Plot(root, { height: 230, xlabel: "eigenvalues of the sample covariance", ylabel: "density" });
+    const plot2 = new DC.Plot(root, { height: 190, xlabel: "spike strength θ", ylabel: "overlap |⟨û, v⟩|²" });
+    const caption = document.createElement("div");
+    caption.className = "caption";
+    root.appendChild(caption);
+    const theory = (theta, q) => theta <= Math.sqrt(q)
+      ? [(1 + Math.sqrt(q)) ** 2, 0]
+      : [(1 + theta) * (1 + q / theta), (1 - q / theta ** 2) / (1 + q / theta)];
+
+    function render() {
+      const theta = vals.theta, q = vals.q, T = Math.max(2, Math.round(N / q));
+      const X = Array.from({ length: N }, (_, i) => Array.from({ length: T }, () => (i === 0 ? Math.sqrt(1 + theta) : 1) * DC.randn()));
+      const E = Array.from({ length: N }, () => new Array(N).fill(0));
+      for (let i = 0; i < N; i++) for (let j = i; j < N; j++) {
+        let acc = 0; const a = X[i], b = X[j];
+        for (let t = 0; t < T; t++) acc += a[t] * b[t];
+        E[i][j] = E[j][i] = acc / T;
+      }
+      const ev = DC.eigSymFast(E);
+      // top eigenvector by power iteration
+      let u = Array.from({ length: N }, DC.randn);
+      for (let it = 0; it < 400; it++) {
+        const w = E.map((row) => row.reduce((s, v, k) => s + v * u[k], 0));
+        const nrm = Math.sqrt(w.reduce((s, v) => s + v * v, 0));
+        u = w.map((v) => v / nrm);
+      }
+      const overlap = u[0] * u[0];
+      const [lamPred, ovPred] = theory(theta, q);
+      const edge = (1 + Math.sqrt(q)) ** 2;
+      const xmax = Math.max(ev[N - 1], lamPred, edge) * 1.12;
+      const nonzero = ev.filter((v) => v > 1e-8);
+      const h = DC.histogram(nonzero, 0, xmax, 60).map((b) => ({ ...b, y: (b.y * nonzero.length) / N }));
+      const lo = (1 - Math.sqrt(q)) ** 2;
+      const mp = (x) => (x > lo && x < edge ? Math.sqrt((edge - x) * (x - lo)) / (2 * Math.PI * q * x) : 0);
+      plot.draw([0, xmax], [0, 1.2], (ctx, p) => {
+        p.bars(h); p.curve(mp, ORANGE, 2, [], 400);
+        ctx.strokeStyle = GREEN; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+        ctx.beginPath(); ctx.moveTo(p.X(lamPred), p.Y(0)); ctx.lineTo(p.X(lamPred), p.Y(1.2)); ctx.stroke(); ctx.setLineDash([]);
+        p.dots([ev[N - 1]], [0.05], PINK, 6, 1);
+      });
+      const ths = Array.from({ length: 200 }, (_, i) => (4 * i) / 199);
+      plot2.draw([0, 4], [0, 1], (ctx, p) => {
+        p.line(ths, ths.map((t) => theory(t, q)[1]), ORANGE, 2);
+        ctx.strokeStyle = GREY_LINE(p); ctx.setLineDash([4, 4]); ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(p.X(Math.sqrt(q)), p.Y(0)); ctx.lineTo(p.X(Math.sqrt(q)), p.Y(1)); ctx.stroke(); ctx.setLineDash([]);
+        p.dots([theta], [overlap], PINK, 6, 1);
+      });
+      caption.innerHTML = DC.legend([{ color: ORANGE, label: "theory (MP bulk / overlap curve)" }, { color: GREEN, label: "predicted top eigenvalue", dash: true }, { color: PINK, label: "this sample" }]) +
+        `<br>Threshold √q = ${Math.sqrt(q).toFixed(2)}. True spike eigenvalue ${(1 + theta).toFixed(2)}; observed top eigenvalue ${ev[N - 1].toFixed(2)} (theory ${lamPred.toFixed(2)}); ` +
+        `overlap ${overlap.toFixed(2)} (theory ${ovPred.toFixed(2)}). ` +
+        (theta <= Math.sqrt(q) ? "Below the threshold the spike is invisible: the top eigenvalue sits at the MP edge and its eigenvector is noise." :
+          "Above the threshold the eigenvalue pops out (biased upward) and the eigenvector is only partially aligned with the truth. Near the threshold, N = 150 is far from the limit.");
     }
     render();
   };
