@@ -1,7 +1,7 @@
 site_name: When p Meets n
 site_description: Daily notes on random matrices, shrinkage & uncertainty — statistics when the dimension is comparable to the sample size.
-site_url: https://bctmm.github.io/High-Dimensional-Statistics-Notes/
-repo_url: https://github.com/BCTMM/High-Dimensional-Statistics-Notes
+site_url: https://bctmm.github.io/When-p-meets-n/
+repo_url: https://github.com/BCTMM/When-p-meets-n
 
 hooks:
   - hooks/curriculum.py

@@ -1,7 +1,7 @@
 # When p Meets n
 
 **Daily notes on random matrices, shrinkage & uncertainty** — read them at
-**<https://bctmm.github.io/High-Dimensional-Statistics-Notes/>**.
+**<https://bctmm.github.io/When-p-meets-n/>**.
 
 Classical statistics assumes many more samples than variables. Modern data rarely cooperates: a covariance
 matrix of 500 stocks from two years of returns, a regression with as many features as observations, a
